@@ -1,0 +1,5 @@
+{
+  "name": "Rotation Planner Turkey",
+  "description": "A 28/28 rotation planner with Turkey public holidays, manual overrides, and working day calculation.",
+  "requestFramePermissions": []
+}
