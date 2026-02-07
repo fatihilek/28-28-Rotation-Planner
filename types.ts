@@ -3,6 +3,7 @@ export enum DayType {
   OFF = 'OFF',
   TRAVEL = 'TRAVEL',
   HOLIDAY = 'HOLIDAY',
+  EMPTY = 'EMPTY',
 }
 
 export interface DayState {
@@ -18,6 +19,8 @@ export interface AppState {
   rotationStartDate: string; // YYYY-MM-DD
   overrides: Record<string, DayType>; // Date -> Type
   countryCode: string;
+  shiftStart?: string;
+  shiftEnd?: string;
 }
 
 export interface Country {

@@ -10,8 +10,8 @@ const Legend: React.FC<LegendProps> = ({ selectedTool, onSelectTool }) => {
   
   const items = [
     { type: 'AUTO', label: 'Pointer (Cycle Work/Off/Travel)', color: 'bg-white border-2 border-gray-300' },
-    { type: DayType.WORK, label: 'Work', color: 'bg-green-500 text-white' },
-    { type: DayType.OFF, label: 'Off', color: 'bg-orange-400 text-black' },
+    { type: DayType.WORK, label: 'Work', color: 'bg-orange-400 text-black' },
+    { type: DayType.OFF, label: 'Off', color: 'bg-green-500 text-white' },
     { type: DayType.TRAVEL, label: 'Travel', color: 'bg-yellow-300 text-black' },
     { type: DayType.HOLIDAY, label: 'Holiday', color: 'bg-red-600 text-white' },
   ];

@@ -1,5 +1,22 @@
 import { DayType, DayState } from '../types';
 
+export const getDatesInRange = (startDateStr: string, endDateStr: string): string[] => {
+  const dates: string[] = [];
+  const start = new Date(startDateStr);
+  const end = new Date(endDateStr);
+
+  // Ensure start is before end
+  const startDate = start < end ? start : end;
+  const endDate = start < end ? end : start;
+
+  const current = new Date(startDate);
+  while (current <= endDate) {
+    dates.push(current.toISOString().split('T')[0]);
+    current.setDate(current.getDate() + 1);
+  }
+  return dates;
+};
+
 export const generateCalendarData = (
   year: number,
   rotationStartDateStr: string,
