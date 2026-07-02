@@ -1,6 +1,7 @@
 import { Country } from '../types';
 
-const API_BASE = 'https://date.nager.at/api/v3';
+const API_BASE = 'https://calendarific.com/api/v2';
+const API_KEY = import.meta.env.VITE_CALENDARIFIC_API_KEY as string | undefined;
 
 // --- Local Fallback for Turkey (Preserved) ---
 const getTurkeyHolidaysLocal = (year: number): Record<string, string> => {
@@ -35,39 +36,117 @@ const getTurkeyHolidaysLocal = (year: number): Record<string, string> => {
 
 // --- API Functions ---
 
+const getCalendarificUrl = (
+  endpoint: 'countries' | 'holidays',
+  params: Record<string, string>
+): string => {
+  const query = new URLSearchParams({
+    api_key: API_KEY || '',
+    ...params
+  });
+  return `${API_BASE}/${endpoint}?${query.toString()}`;
+};
+
+const ensureApiKey = (): void => {
+  if (!API_KEY) {
+    throw new Error('Missing VITE_CALENDARIFIC_API_KEY');
+  }
+};
+
+type CalendarificCountriesResponse = {
+  meta?: { code?: number };
+  response?: {
+    countries?: Array<{
+      country_name?: string;
+      ['iso-3166']?: string;
+    }>;
+  };
+};
+
+type CalendarificHolidaysResponse = {
+  meta?: { code?: number };
+  response?: {
+    holidays?: Array<{
+      name?: string;
+      local_name?: string;
+      date?: {
+        iso?: string;
+      };
+    }>;
+  };
+};
+
 export const fetchCountries = async (): Promise<Country[]> => {
+  if (!API_KEY) {
+    return [{ key: 'TR', value: 'Turkey' }];
+  }
+
   try {
-    const res = await fetch(`${API_BASE}/AvailableCountries`);
+    const res = await fetch(getCalendarificUrl('countries', {}));
     if (!res.ok) throw new Error('Failed to fetch countries');
-    const data = await res.json();
+    const data = (await res.json()) as CalendarificCountriesResponse;
+    const countries = data.response?.countries || [];
     
-    // Map API response (countryCode, name) to App Interface (key, value)
-    return data.map((c: any) => ({
-      key: c.countryCode,
-      value: c.name
-    }));
+    // Map API response (iso-3166, country_name) to App Interface (key, value)
+    const mapped = countries
+      .filter((country) => country['iso-3166'] && country.country_name)
+      .map((country) => ({
+        key: String(country['iso-3166']).toUpperCase(),
+        value: String(country.country_name)
+      }))
+      .sort((left, right) => left.value.localeCompare(right.value));
+
+    if (mapped.length === 0) {
+      throw new Error('Calendarific countries payload is empty');
+    }
+
+    return mapped;
   } catch (e) {
-    console.warn("API Error fetching countries, using fallback.", e);
+    console.warn('Calendarific error fetching countries, using fallback.', e);
     return [{ key: 'TR', value: 'Turkey' }];
   }
 };
 
-export const fetchHolidays = async (year: number, countryCode: string): Promise<Record<string, string>> => {
+export const fetchHolidays = async (
+  year: number,
+  countryCode: string,
+  signal?: AbortSignal
+): Promise<Record<string, string>> => {
   const map: Record<string, string> = {};
 
+  if (!API_KEY) {
+    return countryCode === 'TR' ? getTurkeyHolidaysLocal(year) : {};
+  }
+
   try {
-    const res = await fetch(`${API_BASE}/PublicHolidays/${year}/${countryCode}`);
+    const res = await fetch(
+      getCalendarificUrl('holidays', {
+        country: countryCode.toUpperCase(),
+        year: String(year),
+        type: 'national'
+      }),
+      { signal }
+    );
     if (!res.ok) throw new Error('Failed to fetch holidays');
     
-    const data: any[] = await res.json();
-    data.forEach(h => {
-      // Use localName or name
-      map[h.date] = h.localName || h.name;
+    const data = (await res.json()) as CalendarificHolidaysResponse;
+    const holidays = data.response?.holidays || [];
+
+    holidays.forEach((holiday) => {
+      const isoDate = holiday.date?.iso;
+      if (!isoDate) return;
+
+      const dayKey = isoDate.slice(0, 10);
+      map[dayKey] = holiday.local_name || holiday.name || 'Holiday';
     });
     
     return map;
   } catch (e) {
-    console.warn(`API Error fetching holidays for ${countryCode}, checking fallback.`, e);
+    if (e instanceof DOMException && e.name === 'AbortError') {
+      throw e;
+    }
+
+    console.warn(`Calendarific error fetching holidays for ${countryCode}, checking fallback.`, e);
     
     // Fallback for Turkey if API fails
     if (countryCode === 'TR') {

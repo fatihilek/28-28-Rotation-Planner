@@ -1,20 +1,74 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Rotation Planner (28/28)
 
-# Run and deploy your AI Studio app
+Plan and share a 28-days-on / 28-days-off rotation calendar with manual overrides, holidays, undo/redo, sharing, print layout, and mobile month view.
 
-This contains everything you need to run your app locally.
+Live site, after GitHub Pages deploys from `main`:
 
-View your app in AI Studio: https://ai.studio/apps/drive/1iyTXR0H71MK8NUhBg41eOCtzxAb9xiJc
+https://filek2039.github.io/28-28-Rotation-Planner/
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
+Prerequisites:
 
+- Node.js 22 recommended
+- npm
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the dev server:
+
+```bash
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3001/
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+Preview the production build:
+
+```bash
+npm run preview
+```
+
+## Holiday Data
+
+The app can fetch countries and public holidays from Calendarific:
+
+- `https://calendarific.com/api/v2/countries`
+- `https://calendarific.com/api/v2/holidays`
+
+For public GitHub Pages deployment, no API key is required. Without a key, the app uses a local Turkey fallback list and keeps the public build free of private credentials.
+
+If you add a local Calendarific key for development, create `.env.local`:
+
+```bash
+VITE_CALENDARIFIC_API_KEY=your_calendarific_api_key
+```
+
+Do not commit `.env.local`. Vite embeds `VITE_*` values into the browser bundle, so any key used in a static GitHub Pages build is public.
+
+## GitHub Pages Deployment
+
+This repository includes a GitHub Actions workflow at `.github/workflows/deploy-pages.yml`.
+
+On every push to `main`, GitHub Actions:
+
+1. Installs dependencies with `npm ci`
+2. Builds the app with `npm run build`
+3. Uploads `dist`
+4. Deploys to GitHub Pages
+
+In the GitHub repository settings, set Pages to use **GitHub Actions** as the source if it is not already enabled.

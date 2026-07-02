@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rotation Planner Light</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg: #eef6fb;
+        --surface: #ffffff;
+        --border: #d4e2ec;
+        --ink: #1f2937;
+        --muted: #64748b;
+        --work: #fb923c;
+        --off: #22c55e;
+        --travel: #facc15;
+        --holiday: #dc2626;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Source Sans 3", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(900px 420px at 0% -10%, #dbeaf5, transparent 70%),
+          radial-gradient(900px 420px at 100% -10%, #e6f0f8, transparent 70%),
+          var(--bg);
+      }
+      .app {
+        max-width: 1680px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+        padding: 16px;
+      }
+      h1 {
+        margin: 0 0 8px 0;
+        font-size: 28px;
+      }
+      .muted { color: var(--muted); }
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+      }
+      label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
+      input, select {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
+        font-size: 14px;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin-top: 12px;
+      }
+      .btn {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .btn.primary {
+        background: #2563eb;
+        color: #fff;
+        border-color: #2563eb;
+      }
+      .btn.danger { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+      .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: #fff;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .chip.active {
+        outline: 2px solid #3b82f6;
+        outline-offset: 1px;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        border: 1px solid #cbd5f5;
+      }
+      .grid-wrap {
+        margin-top: 16px;
+        overflow: auto;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+      }
+      .grid {
+        min-width: 1000px;
+        display: grid;
+        grid-template-columns: 120px repeat(31, 1fr) 80px 220px;
+        font-size: 12px;
+      }
+      .cell {
+        border-right: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        cursor: pointer;
+      }
+      .cell.header {
+        background: #f1f5f9;
+        font-weight: 700;
+        height: 38px;
+      }
+      .cell.month {
+        position: sticky;
+        left: 0;
+        background: #fff;
+        z-index: 2;
+        font-weight: 700;
+        justify-content: flex-start;
+        padding-left: 10px;
+      }
+      .cell.empty { background: #f8fafc; }
+      .work { background: var(--work); color: #111827; }
+      .off { background: var(--off); color: #fff; }
+      .travel { background: var(--travel); color: #111827; }
+      .holiday { background: var(--holiday); color: #fff; font-weight: 700; }
+      .holiday-dot {
+        position: absolute;
+        right: 4px;
+        top: 4px;
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: #fde047;
+      }
+      .stats { font-weight: 700; background: #f8fafc; }
+      .notes {
+        justify-content: flex-start;
+        padding: 0 8px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .summary .box {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        padding: 10px;
+      }
+      .status {
+        font-size: 12px;
+        margin-top: 8px;
+      }
+      .footer {
+        margin-top: 18px;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+      }
+      @media (max-width: 900px) {
+        .grid { min-width: 820px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <h1>Rotation Planner Light</h1>
+      <div class="muted">Single-file version. Paste your Calendarific API key to load holidays.</div>
+
+      <div class="card">
+        <div class="controls">
+          <div>
+            <label>Year</label>
+            <input id="yearInput" type="number" value="2026" />
+          </div>
+          <div>
+            <label>Rotation Start Date</label>
+            <input id="startInput" type="date" value="2025-12-01" />
+          </div>
+          <div>
+            <label>Country Code</label>
+            <input id="countryInput" type="text" value="TR" />
+          </div>
+          <div>
+            <label>Calendarific API Key</label>
+            <input id="apiKeyInput" type="password" placeholder="Paste API key" />
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="loadBtn" class="btn primary">Load Holidays</button>
+          <button id="shareBtn" class="btn">Share Link</button>
+          <button id="clearBtn" class="btn danger">Clear Overrides</button>
+          <span id="status" class="status muted"></span>
+        </div>
+
+        <div class="legend" id="toolLegend"></div>
+
+        <div class="summary" id="summary"></div>
+      </div>
+
+      <div class="grid-wrap">
+        <div id="grid" class="grid"></div>
+      </div>
+
+      <div class="footer">Public holiday data provided by Calendarific</div>
+    </div>
+
+    <script>
+      const MONTH_NAMES = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+
+      const DayType = {
+        WORK: 'WORK',
+        OFF: 'OFF',
+        TRAVEL: 'TRAVEL',
+        HOLIDAY: 'HOLIDAY',
+        EMPTY: 'EMPTY'
+      };
+
+      const tools = [
+        { type: 'AUTO', label: 'Auto', color: '#fff' },
+        { type: DayType.WORK, label: 'Work', color: 'var(--work)' },
+        { type: DayType.OFF, label: 'Off', color: 'var(--off)' },
+        { type: DayType.TRAVEL, label: 'Travel', color: 'var(--travel)' },
+        { type: DayType.HOLIDAY, label: 'Holiday', color: 'var(--holiday)' },
+        { type: 'CLEAR', label: 'Clear', color: '#fff' }
+      ];
+
+      const state = {
+        year: 2026,
+        rotationStartDate: '2025-12-01',
+        countryCode: 'TR',
+        apiKey: '',
+        overrides: {},
+        holidays: {},
+        selectedTool: 'AUTO'
+      };
+
+      const yearInput = document.getElementById('yearInput');
+      const startInput = document.getElementById('startInput');
+      const countryInput = document.getElementById('countryInput');
+      const apiKeyInput = document.getElementById('apiKeyInput');
+      const loadBtn = document.getElementById('loadBtn');
+      const shareBtn = document.getElementById('shareBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const statusEl = document.getElementById('status');
+      const gridEl = document.getElementById('grid');
+      const summaryEl = document.getElementById('summary');
+      const toolLegend = document.getElementById('toolLegend');
+
+      const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+      function getTurkeyHolidaysLocal(year) {
+        const holidays = {};
+        const add = (month, day, name) => {
+          const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          holidays[dateStr] = name;
+        };
+
+        // Static
+        add(1, 1, "New Year's Day");
+        add(4, 23, "National Sovereignty and Children's Day");
+        add(5, 1, "Labour and Solidarity Day");
+        add(5, 19, "Commemoration of Atatürk, Youth and Sports Day");
+        add(7, 15, "Democracy and National Unity Day");
+        add(8, 30, "Victory Day");
+        add(10, 29, "Republic Day");
+
+        // Religious Estimates (Simplified for 2024-2027)
+        if (year === 2024) {
+          add(4, 10, "Ramadan Feast"); add(6, 16, "Sacrifice Feast");
+        } else if (year === 2025) {
+          add(3, 30, "Ramadan Feast"); add(6, 6, "Sacrifice Feast");
+        } else if (year === 2026) {
+          add(3, 20, "Ramadan Feast"); add(5, 27, "Sacrifice Feast");
+        } else if (year === 2027) {
+          add(3, 9, "Ramadan Feast"); add(5, 16, "Sacrifice Feast");
+        }
+
+        return holidays;
+      }
+
+      function parseDateToUtcMs(dateStr) {
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+        if (!match) return null;
+        const y = Number(match[1]);
+        const m = Number(match[2]);
+        const d = Number(match[3]);
+        if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) return null;
+        return Date.UTC(y, m - 1, d);
+      }
+
+      function getDatesInRange(start, end) {
+        const startMs = parseDateToUtcMs(start);
+        const endMs = parseDateToUtcMs(end);
+        if (startMs === null || endMs === null) return [];
+        const out = [];
+        const min = Math.min(startMs, endMs);
+        const max = Math.max(startMs, endMs);
+        for (let cur = min; cur <= max; cur += MS_PER_DAY) {
+          out.push(new Date(cur).toISOString().slice(0, 10));
+        }
+        return out;
+      }
+
+      function getDayTypeForDate(dateStr) {
+        const rotationStartMs = parseDateToUtcMs(state.rotationStartDate) || Date.UTC(state.year, 0, 1);
+        const dayMs = parseDateToUtcMs(dateStr);
+        const diffDays = Math.floor((dayMs - rotationStartMs) / MS_PER_DAY);
+        let cycleDay = diffDays % 56;
+        if (cycleDay < 0) cycleDay += 56;
+        let computed = cycleDay < 28 ? DayType.WORK : DayType.OFF;
+
+        const holidayName = state.holidays[dateStr];
+        const isHoliday = !!holidayName;
+
+        if (state.overrides[dateStr]) {
+          return { type: state.overrides[dateStr], holidayName, isHoliday };
+        }
+        if (isHoliday) {
+          return { type: DayType.HOLIDAY, holidayName, isHoliday };
+        }
+        return { type: computed, holidayName, isHoliday };
+      }
+
+      function setTool(tool) {
+        state.selectedTool = tool;
+        renderLegend();
+      }
+
+      function renderLegend() {
+        toolLegend.innerHTML = '';
+        tools.forEach((tool) => {
+          const button = document.createElement('button');
+          button.className = 'chip' + (state.selectedTool === tool.type ? ' active' : '');
+          const dot = document.createElement('span');
+          dot.className = 'dot';
+          dot.style.background = tool.color;
+          button.appendChild(dot);
+          const label = document.createElement('span');
+          label.textContent = tool.label;
+          button.appendChild(label);
+          button.onclick = () => setTool(tool.type);
+          toolLegend.appendChild(button);
+        });
+      }
+
+      function applyOverride(dateStr, currentType) {
+        if (state.selectedTool === 'AUTO') {
+          if (state.overrides[dateStr]) {
+            if (currentType === DayType.WORK) state.overrides[dateStr] = DayType.OFF;
+            else if (currentType === DayType.OFF) state.overrides[dateStr] = DayType.TRAVEL;
+            else delete state.overrides[dateStr];
+          } else {
+            state.overrides[dateStr] = currentType === DayType.WORK ? DayType.OFF : DayType.WORK;
+          }
+          return;
+        }
+        if (state.selectedTool === 'CLEAR') {
+          delete state.overrides[dateStr];
+          return;
+        }
+        state.overrides[dateStr] = state.selectedTool;
+      }
+
+      function renderSummary(stats) {
+        summaryEl.innerHTML = `
+          <div class="box"><div class="muted">Work</div><div><strong>${stats.work}</strong></div></div>
+          <div class="box"><div class="muted">Off</div><div><strong>${stats.off}</strong></div></div>
+          <div class="box"><div class="muted">Travel</div><div><strong>${stats.travel}</strong></div></div>
+          <div class="box"><div class="muted">Holiday</div><div><strong>${stats.holidays}</strong></div></div>
+        `;
+      }
+
+      function renderGrid() {
+        gridEl.innerHTML = '';
+
+        const headerCells = ['Month'];
+        for (let i = 1; i <= 31; i += 1) headerCells.push(String(i));
+        headerCells.push('Work');
+        headerCells.push('Holidays / Notes');
+
+        headerCells.forEach((cell, index) => {
+          const div = document.createElement('div');
+          div.className = 'cell header';
+          if (index === 0) {
+            div.classList.add('month');
+          }
+          div.textContent = cell;
+          gridEl.appendChild(div);
+        });
+
+        const stats = { work: 0, off: 0, travel: 0, holidays: 0 };
+
+        for (let month = 0; month < 12; month += 1) {
+          const daysInMonth = new Date(state.year, month + 1, 0).getDate();
+          const monthDays = [];
+
+          for (let day = 1; day <= daysInMonth; day += 1) {
+            const dateStr = `${state.year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            monthDays.push(dateStr);
+          }
+
+          const workCount = monthDays.filter((dateStr) => {
+            const info = getDayTypeForDate(dateStr);
+            return info.type === DayType.WORK;
+          }).length;
+
+          const holidaysInMonth = monthDays
+            .filter((dateStr) => state.holidays[dateStr])
+            .map((dateStr) => `${dateStr.split('-')[2]} ${state.holidays[dateStr]}`)
+            .join(', ');
+
+          const monthCell = document.createElement('div');
+          monthCell.className = 'cell month';
+          monthCell.textContent = MONTH_NAMES[month];
+          gridEl.appendChild(monthCell);
+
+          for (let day = 1; day <= 31; day += 1) {
+            const dayCell = document.createElement('div');
+            dayCell.className = 'cell';
+            if (day > daysInMonth) {
+              dayCell.classList.add('empty');
+              gridEl.appendChild(dayCell);
+              continue;
+            }
+            const dateStr = `${state.year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const info = getDayTypeForDate(dateStr);
+            const typeClass =
+              info.type === DayType.WORK ? 'work' :
+              info.type === DayType.OFF ? 'off' :
+              info.type === DayType.TRAVEL ? 'travel' :
+              info.type === DayType.HOLIDAY ? 'holiday' : '';
+            if (typeClass) dayCell.classList.add(typeClass);
+            dayCell.textContent = String(day);
+            dayCell.title = `${dateStr} - ${info.type}${info.holidayName ? ` (${info.holidayName})` : ''}`;
+            if (info.isHoliday) {
+              const dot = document.createElement('span');
+              dot.className = 'holiday-dot';
+              dayCell.appendChild(dot);
+            }
+            dayCell.onclick = () => {
+              applyOverride(dateStr, info.type);
+              render();
+            };
+            gridEl.appendChild(dayCell);
+
+            if (info.type === DayType.WORK) stats.work += 1;
+            if (info.type === DayType.OFF) stats.off += 1;
+            if (info.type === DayType.TRAVEL) stats.travel += 1;
+            if (info.type === DayType.HOLIDAY) stats.holidays += 1;
+          }
+
+          const workCell = document.createElement('div');
+          workCell.className = 'cell stats';
+          workCell.textContent = String(workCount);
+          gridEl.appendChild(workCell);
+
+          const notesCell = document.createElement('div');
+          notesCell.className = 'cell notes';
+          notesCell.textContent = holidaysInMonth;
+          notesCell.title = holidaysInMonth;
+          gridEl.appendChild(notesCell);
+        }
+
+        renderSummary(stats);
+      }
+
+      function encodeState() {
+        const payload = {
+          year: state.year,
+          rotationStartDate: state.rotationStartDate,
+          countryCode: state.countryCode,
+          overrides: state.overrides
+        };
+        return encodeURIComponent(JSON.stringify(payload));
+      }
+
+      function decodeState() {
+        const hash = window.location.hash.slice(1);
+        if (!hash) return;
+        try {
+          const decoded = JSON.parse(decodeURIComponent(hash));
+          if (decoded.year) state.year = decoded.year;
+          if (decoded.rotationStartDate) state.rotationStartDate = decoded.rotationStartDate;
+          if (decoded.countryCode) state.countryCode = decoded.countryCode;
+          if (decoded.overrides) state.overrides = decoded.overrides;
+        } catch (e) {
+          console.warn('Failed to parse URL state', e);
+        }
+      }
+
+      async function loadHolidays() {
+        const key = state.apiKey;
+        if (!key) {
+          if (state.countryCode.toUpperCase() === 'TR') {
+            state.holidays = getTurkeyHolidaysLocal(state.year);
+            statusEl.textContent = 'Using local Turkey holiday fallback.';
+            render();
+            return;
+          }
+          statusEl.textContent = 'API key is required.';
+          return;
+        }
+        statusEl.textContent = 'Loading holidays...';
+        try {
+          const url = new URL('https://calendarific.com/api/v2/holidays');
+          url.searchParams.set('api_key', key);
+          url.searchParams.set('country', state.countryCode.toUpperCase());
+          url.searchParams.set('year', String(state.year));
+          url.searchParams.set('type', 'national');
+          const res = await fetch(url.toString());
+          if (!res.ok) throw new Error('Holiday fetch failed');
+          const data = await res.json();
+          const holidays = data?.response?.holidays || [];
+          const map = {};
+          holidays.forEach((holiday) => {
+            const iso = holiday?.date?.iso;
+            if (!iso) return;
+            map[iso.slice(0, 10)] = holiday.local_name || holiday.name || 'Holiday';
+          });
+          state.holidays = map;
+          statusEl.textContent = `Loaded ${holidays.length} holidays.`;
+        } catch (err) {
+          console.error(err);
+          if (state.countryCode.toUpperCase() === 'TR') {
+            state.holidays = getTurkeyHolidaysLocal(state.year);
+            statusEl.textContent = 'API failed. Using local Turkey holiday fallback.';
+          } else {
+            statusEl.textContent = 'Failed to load holidays.';
+            state.holidays = {};
+          }
+        }
+        render();
+      }
+
+      function render() {
+        yearInput.value = String(state.year);
+        startInput.value = state.rotationStartDate;
+        countryInput.value = state.countryCode;
+        renderLegend();
+        renderGrid();
+      }
+
+      function init() {
+        decodeState();
+        const savedKey = localStorage.getItem('calendarificKey');
+        if (savedKey) {
+          state.apiKey = savedKey;
+          apiKeyInput.value = savedKey;
+        }
+        yearInput.onchange = (e) => { state.year = Number(e.target.value); render(); };
+        startInput.onchange = (e) => { state.rotationStartDate = e.target.value; render(); };
+        countryInput.onchange = (e) => { state.countryCode = e.target.value.toUpperCase(); render(); };
+        apiKeyInput.onchange = (e) => {
+          state.apiKey = e.target.value.trim();
+          localStorage.setItem('calendarificKey', state.apiKey);
+        };
+        loadBtn.onclick = loadHolidays;
+        shareBtn.onclick = async () => {
+          window.location.hash = encodeState();
+          const url = window.location.href;
+          try {
+            await navigator.clipboard.writeText(url);
+            statusEl.textContent = 'Link copied.';
+          } catch {
+            window.prompt('Copy this link:', url);
+          }
+        };
+        clearBtn.onclick = () => {
+          state.overrides = {};
+          render();
+        };
+
+        render();
+      }
+
+      init();
+    </script>
+  </body>
+</html>

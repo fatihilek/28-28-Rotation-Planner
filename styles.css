@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --bg: #eef6fb;
+  --bg-ornament: #dbeaf5;
+  --surface: #ffffff;
+  --surface-border: #d4e2ec;
+  --surface-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  --ink: #1e293b;
+  --muted: #64748b;
+  --brand: #0f766e;
+  --brand-soft: rgba(15, 118, 110, 0.14);
+  --font-display: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", sans-serif;
+}
+
+body {
+  background:
+    radial-gradient(900px 420px at 0% -10%, var(--bg-ornament), transparent 70%),
+    radial-gradient(900px 420px at 100% -10%, #e6f0f8, transparent 70%),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+}
+
+.app-shell {
+  max-width: 1680px;
+  margin: 0 auto;
+}
+
+.surface-panel {
+  background: var(--surface);
+  border-color: var(--surface-border) !important;
+  box-shadow: var(--surface-shadow);
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-layout {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+}
