@@ -74,6 +74,8 @@ export const generateCalendarData = (
       let computedType = DayType.OFF;
       if (cycleDay < 28) {
         computedType = DayType.WORK;
+      } else if (cycleDay === 28 || cycleDay === 55) {
+        computedType = DayType.TRAVEL;
       }
 
       // Check Holiday
