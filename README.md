@@ -4,7 +4,7 @@ Plan and share a 28-days-on / 28-days-off rotation calendar with manual override
 
 Live site, after GitHub Pages deploys from `main`:
 
-https://filek2039.github.io/28-28-Rotation-Planner/
+https://fatihilek.github.io/28-28-Rotation-Planner/
 
 ## Run Locally
 
