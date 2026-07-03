@@ -44,6 +44,7 @@ const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const HAPTICS_STORAGE_KEY = 'rotationPlanner:haptics';
 const MOBILE_VIEW_STORAGE_KEY = 'rotationPlanner:forceMobile';
 const COPY_FEEDBACK_TIMEOUT_MS = 2000;
+const MAX_SHARED_OVERRIDES = 500;
 
 const getInitialForceMobile = (): boolean => {
   if (typeof window === 'undefined') return false;
@@ -75,6 +76,39 @@ const normalizeYear = (value: unknown): number | null => {
   if (!Number.isInteger(parsed)) return null;
   if (parsed < MIN_YEAR || parsed > MAX_YEAR) return null;
   return parsed;
+};
+
+const isDateOnlyString = (value: unknown): value is string =>
+  typeof value === 'string' && parseDateToUtcMs(value) !== null;
+
+const normalizeCountryCode = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(normalized)) return null;
+  return normalized;
+};
+
+const isSharedDayType = (value: unknown): value is DayType =>
+  value === DayType.WORK ||
+  value === DayType.OFF ||
+  value === DayType.TRAVEL ||
+  value === DayType.HOLIDAY;
+
+const normalizeSharedOverrides = (value: unknown): Record<string, DayType> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+
+  const entries = Object.entries(value as Record<string, unknown>);
+  if (entries.length > MAX_SHARED_OVERRIDES) return null;
+
+  const normalized: Record<string, DayType> = {};
+  for (const [dateStr, dayType] of entries) {
+    if (!isDateOnlyString(dateStr) || !isSharedDayType(dayType)) {
+      return null;
+    }
+    normalized[dateStr] = dayType;
+  }
+
+  return normalized;
 };
 
 const isAbortError = (error: unknown): boolean =>
@@ -180,6 +214,9 @@ const parseDateToUtcMs = (dateStr: string): number | null => {
   const month = Number(match[2]);
   const day = Number(match[3]);
   if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null;
+  if (month < 1 || month > 12) return null;
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  if (day < 1 || day > daysInMonth) return null;
   return Date.UTC(year, month - 1, day);
 };
 
@@ -321,13 +358,23 @@ const App: React.FC = () => {
           setYear(decodedYear);
           setYearInput(String(decodedYear));
         }
-        if (decoded.rotationStartDate) setRotationStartDate(decoded.rotationStartDate);
-        if (decoded.overrides && typeof decoded.overrides === 'object') {
-          dispatchOverrides({ type: 'set', next: decoded.overrides as Record<string, DayType> });
+        if (isDateOnlyString(decoded.rotationStartDate)) {
+          setRotationStartDate(decoded.rotationStartDate);
         }
-        if (decoded.countryCode) setCountryCode(decoded.countryCode);
-        if (decoded.shiftStart) setShiftStart(decoded.shiftStart);
-        if (decoded.shiftEnd) setShiftEnd(decoded.shiftEnd);
+        const decodedOverrides = normalizeSharedOverrides(decoded.overrides);
+        if (decodedOverrides) {
+          dispatchOverrides({ type: 'set', next: decodedOverrides });
+        }
+        const decodedCountryCode = normalizeCountryCode(decoded.countryCode);
+        if (decodedCountryCode) {
+          setCountryCode(decodedCountryCode);
+        }
+        if (isDateOnlyString(decoded.shiftStart)) {
+          setShiftStart(decoded.shiftStart);
+        }
+        if (isDateOnlyString(decoded.shiftEnd)) {
+          setShiftEnd(decoded.shiftEnd);
+        }
       } catch (e) {
         console.error("Failed to parse state from URL", e);
       }

@@ -1,5 +1,4 @@
-const CACHE_NAME = 'rotation-planner-v4';
-const API_CACHE = 'rotation-planner-api-v1';
+const CACHE_NAME = 'rotation-planner-v5';
 const CORE_ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 const NETWORK_FIRST_DESTINATIONS = new Set(['document', 'script', 'style', 'worker', 'manifest']);
 
@@ -15,7 +14,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((key) => key !== CACHE_NAME && key !== API_CACHE)
+          .filter((key) => key !== CACHE_NAME)
           .map((key) => caches.delete(key))
       )
     )
@@ -45,7 +44,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   if (url.hostname === 'calendarific.com') {
-    event.respondWith(networkFirst(request, API_CACHE));
+    event.respondWith(fetch(request));
     return;
   }
 

@@ -52,13 +52,15 @@ The app can fetch countries and public holidays from Calendarific:
 
 For public GitHub Pages deployment, no API key is required. Without a key, the app uses a local Turkey fallback list and keeps the public build free of private credentials.
 
+Do not add `VITE_CALENDARIFIC_API_KEY` as a GitHub Actions secret for the Pages build. Vite embeds `VITE_*` values into the browser bundle, so any key used in a static public build is visible to visitors.
+
 If you add a local Calendarific key for development, create `.env.local`:
 
 ```bash
 VITE_CALENDARIFIC_API_KEY=your_calendarific_api_key
 ```
 
-Do not commit `.env.local`. Vite embeds `VITE_*` values into the browser bundle, so any key used in a static GitHub Pages build is public.
+Do not commit `.env.local`; it is for local development only.
 
 ## GitHub Pages Deployment
 

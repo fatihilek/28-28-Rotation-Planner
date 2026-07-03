@@ -47,12 +47,6 @@ const getCalendarificUrl = (
   return `${API_BASE}/${endpoint}?${query.toString()}`;
 };
 
-const ensureApiKey = (): void => {
-  if (!API_KEY) {
-    throw new Error('Missing VITE_CALENDARIFIC_API_KEY');
-  }
-};
-
 type CalendarificCountriesResponse = {
   meta?: { code?: number };
   response?: {
