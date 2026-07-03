@@ -1116,7 +1116,7 @@ const App: React.FC = () => {
 
       {/* Main Grid */}
       {!isMobileView && (
-      <div className={`overflow-auto max-h-[72vh] bg-white rounded-lg shadow border border-gray-300 select-none surface-panel ${gridTouchClass}`}>
+      <div className={`overflow-x-auto overflow-y-visible bg-white rounded-lg shadow border border-gray-300 select-none surface-panel ${gridTouchClass}`}>
         <div className="min-w-[1000px]">
           {/* Header Row */}
           <div className={`grid ${CALENDAR_GRID_COLUMNS} border-b border-gray-300 bg-gray-100 font-bold text-sm text-center sticky top-0 z-30`}>
